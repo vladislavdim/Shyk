@@ -231,8 +231,9 @@
   <div id="map"></div>
   <div class="legend">
     <span><span class="dot green"></span> Подтверждено (Urząd Morski)</span>
-    <span><span class="dot" style="background:#2ba3a3;"></span> Есть основание (Wody Polskie), но не безусловно</span>
+    <span><span class="dot" style="background:#2ba3a3;"></span> Есть основание (Wody Polskie)</span>
     <span><span class="dot orange"></span> Нужно согласие владельца</span>
+    <span><span class="dot" style="background:#8a7a6d;"></span> Не проверено, только карта</span>
     <span><span class="dot" style="background:#d9534f;"></span> Не включать</span>
   </div>
 </div>
@@ -245,7 +246,9 @@
     <div id="amber-list"></div>
     <div class="section-title">🔵 Внутренние воды — есть основание Wody Polskie (не безусловно)</div>
     <div id="water-list"></div>
-    <div class="section-title">🔵 Дикие речные пляжи — существование подтверждено картой, часы НЕ установлены</div>
+    <div class="section-title">🔵 Крупные озёрные районы — есть основание Wody Polskie</div>
+    <div id="more-lake-list"></div>
+    <div class="section-title">⚪ Дикие речные пляжи — НЕ проверено официально, только карта</div>
     <div id="river-list"></div>
     <div class="section-title">🔵 Из реестра GIS — офиц. kąpieliska (со своими часами работы)</div>
     <div id="gis-list"></div>
@@ -480,7 +483,7 @@ const waterSpots = [
 
 const SRC_MAP_ONLY = {
   url: "https://www.google.com/maps",
-  label: "Существование подтверждено картой/отзывами посетителей (Google Maps). Часы работы: НЕ УСТАНОВЛЕНЫ в найденных источниках. Запрет на детектор: не найден, но и не проверялся regulamin — если он вообще существует для этого места"
+  label: "⚠️ Не подтверждено официально — только карта/отзывы. Детали в разделе «Правила»"
 };
 
 const riverSpots = [
@@ -506,6 +509,25 @@ const gisSpots = [
   {name:"Jezioro Niegocin (Rydzewo, Giżycko)", lat:53.9655848, lng:21.7637389, note:"Warmińsko-Mazurskie, pow. giżycki. Мазурское озеро, много берега вне офиц. зоны", src:SRC_GIS},
   {name:"Jezioro Serwy (Sucha Rzeczka, Augustów)", lat:53.8906282, lng:23.1919711, note:"Podlaskie, pow. augustowski. Одно из самых чистых озёр Польши", src:SRC_GIS},
   {name:"Zalew Andrzejówka (Chmielnik)", lat:50.5931169, lng:20.7478745, note:"Świętokrzyskie, pow. kielecki. Небольшое живописное водохранилище", src:SRC_GIS}
+];
+
+const moreLakeSpots = [
+  {name:"Jezioro Drawsko (Czaplinek)", lat:53.5950211, lng:16.1820675, note:"2-е по глубине озеро Польши, Pojezierze Drawskie — Zachodniopomorskie", src:SRC_WATER_LAW},
+  {name:"Jezioro Wdzydzkie (Wdzydze)", lat:53.9772033, lng:17.9262912, note:"Bory Tucholskie, острова на озере — Pomorskie", src:SRC_WATER_LAW},
+  {name:"Jezioro Skarlińskie (Iława)", lat:53.4580255, lng:19.4964004, note:"Pojezierze Iławskie, малолюдно — Warmińsko-Mazurskie", src:SRC_WATER_LAW},
+  {name:"Jezioro Charzykowskie (Chojnice)", lat:53.7779603, lng:17.5030694, note:"Bory Tucholskie Nat.Park граничит — само озеро вне парка — Pomorskie", src:SRC_WATER_LAW},
+  {name:"Jezioro Wigry (Suwałki)", lat:54.0214883, lng:23.0782162, note:"⚠️ Частично в границах Wigierski Park Narodowy — уточнить конкретный участок берега — Podlaskie", src:SRC_WATER_LAW},
+  {name:"Jezioro Necko (Augustów)", lat:53.8636111, lng:22.96, note:"В черте города Augustów, начало Augustowского канала — Podlaskie", src:SRC_WATER_LAW},
+  {name:"Jezioro Powidzkie (Powidz)", lat:52.4070517, lng:17.9362643, note:"Популярное у виндсёрферов — Wielkopolskie", src:SRC_WATER_LAW},
+  {name:"Jezioro Ełckie (Ełk)", lat:53.8026675, lng:22.346411, note:"Nowa Plaża Miejska, есть офиц. инфраструктура — Warmińsko-Mazurskie", src:SRC_WATER_LAW},
+  {name:"Jezioro Hańcza (Suwałki)", lat:54.2702319, lng:22.8146416, note:"Самое глубокое озеро Польши (110м), холодная чистая вода — Podlaskie", src:SRC_WATER_LAW},
+  {name:"Jezioro Słupeckie (Słupca)", lat:52.2954772, lng:17.8933516, note:"Тихое озеро, Wielkopolskie", src:SRC_WATER_LAW},
+  {name:"Jezioro Otmuchowskie (Paczków)", lat:50.4515113, lng:17.1424564, note:"Opolskie, живописное водохранилище", src:SRC_WATER_LAW},
+  {name:"Jezioro Wicko (Ustka)", lat:54.5355139, lng:16.6414691, note:"Популярно у виндсёрферов, малолюдно — Pomorskie", src:SRC_WATER_LAW},
+  {name:"Jezioro Gopło (Kruszwica)", lat:52.67429, lng:18.33159, note:"Крупнейшее натуральное озеро центр. Польши — Kujawsko-Pomorskie", src:SRC_WATER_LAW},
+  {name:"Zalew Mietkowski (Wrocław)", lat:50.9547902, lng:16.6185165, note:"⚠️ Отзывы жалуются на цветение воды/мусор — Dolnośląskie", src:SRC_WATER_LAW},
+  {name:"Jezioro Żywieckie (Żywiec)", lat:49.7196612, lng:19.2005192, note:"Горное озеро, Beskidy — Śląskie", src:SRC_WATER_LAW},
+  {name:"Jezioro Rożnowskie (Rożnów)", lat:49.7715184, lng:20.6957939, note:"Малопольске водохранилище в горах — Małopolskie", src:SRC_WATER_LAW}
 ];
 
 const restrictedSpots = [
@@ -568,11 +590,19 @@ restrictedSpots.forEach(s=>{
   el.onclick = ()=>{ switchTab('map'); if(window.__map) window.__map.setView([s.lat,s.lng], 11); };
   restrictedList.appendChild(el);
 });
+const moreLakeList = document.getElementById('more-lake-list');
+moreLakeSpots.forEach(s=>{
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.innerHTML = `<div class="card-title">${s.name}<span class="badge" style="background:rgba(43,163,163,.15);color:#2ba3a3;">вода: есть основание</span></div><div class="card-note">${s.note}</div><a class="src-link" href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🧭 Маршрут</a>`;
+  el.onclick = ()=>{ switchTab('map'); if(window.__map) window.__map.setView([s.lat,s.lng], 12); };
+  moreLakeList.appendChild(el);
+});
 const riverList = document.getElementById('river-list');
 riverSpots.forEach(s=>{
   const el = document.createElement('div');
   el.className = 'card';
-  el.innerHTML = `<div class="card-title">${s.name}<span class="badge" style="background:rgba(43,163,163,.15);color:#2ba3a3;">карта/отзывы</span></div><div class="card-note">${s.note}<br><span style="color:var(--muted);font-size:11px;">📄 ${s.src.label}</span></div><a class="src-link" href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🧭 Маршрут</a>`;
+  el.innerHTML = `<div class="card-title">${s.name}<span class="badge" style="background:rgba(217,83,79,.12);color:#c97a76;">не проверено</span></div><div class="card-note">${s.note}<br><span style="color:var(--muted);font-size:11px;">${s.src.label}</span></div><a class="src-link" href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🧭 Маршрут</a>`;
   el.onclick = ()=>{ switchTab('map'); if(window.__map) window.__map.setView([s.lat,s.lng], 12); };
   riverList.appendChild(el);
 });
@@ -638,9 +668,16 @@ function initMap(){
       L.marker([s.lat, s.lng], {icon:redIcon()}).addTo(map)
         .bindPopup(`<div class="popup-title">${s.name}</div><div class="popup-note">📍 ${s.address}<br>${s.note}</div><a class="popup-link" href="${s.srcUrl}" target="_blank" rel="noopener">📄 ${s.srcLabel}</a><br><a class="popup-link" href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank" rel="noopener">🧭 Маршрут</a>`);
     });
-    riverSpots.forEach(s=>{
+    moreLakeSpots.forEach(s=>{
       L.marker([s.lat, s.lng], {icon:tealIcon()}).addTo(map)
-        .bindPopup(`<div class="popup-title">${s.name}</div><div class="popup-note">${s.note}<br><span style="color:#8ea0b3;font-size:11px;">📄 ${s.src.label}</span></div><a class="popup-link" href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank" rel="noopener">🧭 Маршрут</a>`);
+        .bindPopup(`<div class="popup-title">${s.name}</div><div class="popup-note">${s.note}</div><a class="popup-link" href="${s.src.url}" target="_blank" rel="noopener">📄 ${s.src.label}</a><br><a class="popup-link" href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank" rel="noopener">🧭 Маршрут</a>`);
+    });
+    function greyIcon(){
+      return L.divIcon({className:'', html:'<div style="width:14px;height:14px;border-radius:50%;background:#8a7a6d;border:2px solid #0f1720;"></div>', iconSize:[14,14]});
+    }
+    riverSpots.forEach(s=>{
+      L.marker([s.lat, s.lng], {icon:greyIcon()}).addTo(map)
+        .bindPopup(`<div class="popup-title">${s.name}</div><div class="popup-note">${s.note}<br><span style="color:#8ea0b3;font-size:11px;">${s.src.label}</span></div><a class="popup-link" href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank" rel="noopener">🧭 Маршрут</a>`);
     });
     gisSpots.forEach(s=>{
       L.marker([s.lat, s.lng], {icon:tealIcon()}).addTo(map)
