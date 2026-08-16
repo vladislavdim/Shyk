@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Легальный металлопоиск в Польше</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<style>
+  :root{
+    --bg:#0f1720;
+    --panel:#161f2b;
+    --panel2:#1c2734;
+    --text:#e7edf3;
+    --muted:#8ea0b3;
+    --accent:#3ba55d;
+    --accent2:#e0a72e;
+    --danger:#d9534f;
+    --border:#26323f;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    display:flex;
+    flex-direction:column;
+    height:100vh;
+    overflow:hidden;
+  }
+  header{
+    padding:14px 16px 10px;
+    background:var(--panel);
+    border-bottom:1px solid var(--border);
+    flex-shrink:0;
+  }
+  header h1{
+    margin:0 0 4px;
+    font-size:18px;
+    font-weight:700;
+  }
+  header p{
+    margin:0;
+    font-size:12.5px;
+    color:var(--muted);
+    line-height:1.4;
+  }
+  .tabs{
+    display:flex;
+    gap:6px;
+    padding:8px 16px;
+    background:var(--panel);
+    border-bottom:1px solid var(--border);
+    flex-shrink:0;
+  }
+  .tab{
+    flex:1;
+    text-align:center;
+    padding:8px 6px;
+    border-radius:8px;
+    font-size:13px;
+    font-weight:600;
+    background:var(--panel2);
+    color:var(--muted);
+    cursor:pointer;
+    border:1px solid var(--border);
+    transition:all .15s;
+  }
+  .tab.active{
+    background:var(--accent);
+    color:#08130c;
+    border-color:var(--accent);
+  }
+  .view{
+    flex:1;
+    display:none;
+    overflow:hidden;
+    min-height:0;
+  }
+  .view.active{
+    display:flex;
+    flex-direction:column;
+  }
+  #map{
+    flex:1;
+    min-height:0;
+  }
+  .legend{
+    display:flex;
+    gap:14px;
+    padding:8px 16px;
+    background:var(--panel);
+    border-top:1px solid var(--border);
+    font-size:11.5px;
+    color:var(--muted);
+    flex-shrink:0;
+  }
+  .legend span{display:flex;align-items:center;gap:5px;}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
+  .dot.green{background:var(--accent);}
+  .dot.orange{background:var(--accent2);}
+
+  .list-wrap{
+    flex:1;
+    overflow-y:auto;
+    padding:12px 16px 24px;
+  }
+  .section-title{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--muted);
+    margin:18px 0 8px;
+  }
+  .section-title:first-child{margin-top:4px;}
+  .card{
+    background:var(--panel2);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:12px 14px;
+    margin-bottom:8px;
+  }
+  .card-title{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-weight:700;
+    font-size:14.5px;
+  }
+  .card-note{
+    font-size:12.5px;
+    color:var(--muted);
+    margin-top:4px;
+    line-height:1.4;
+  }
+  .badge{
+    font-size:10px;
+    font-weight:700;
+    padding:2px 8px;
+    border-radius:999px;
+    background:rgba(59,165,93,.15);
+    color:var(--accent);
+    white-space:nowrap;
+    margin-left:8px;
+  }
+  .badge.gray{
+    background:rgba(224,167,46,.15);
+    color:var(--accent2);
+  }
+  .rules-box{
+    background:var(--panel2);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:14px;
+    margin-bottom:14px;
+  }
+  .rules-box h3{
+    margin:0 0 8px;
+    font-size:13.5px;
+    color:var(--accent);
+  }
+  .rules-box ul{
+    margin:0;
+    padding-left:18px;
+    font-size:13px;
+    line-height:1.6;
+    color:var(--text);
+  }
+  .rules-box.warn h3{color:var(--accent2);}
+  .rules-box.danger h3{color:var(--danger);}
+  .leaflet-popup-content-wrapper{
+    background:var(--panel2);
+    color:var(--text);
+    border-radius:10px;
+  }
+  .leaflet-popup-tip{background:var(--panel2);}
+  .popup-title{font-weight:700;font-size:13.5px;margin-bottom:3px;}
+  .popup-note{font-size:12px;color:var(--muted);}
+  .popup-link{
+    display:block;
+    margin-top:6px;
+    font-size:11px;
+    color:var(--accent);
+    text-decoration:none;
+    line-height:1.3;
+  }
+  .popup-link:hover{text-decoration:underline;}
+  .src-link{
+    display:block;
+    margin-top:8px;
+    font-size:11.5px;
+    color:var(--accent);
+    text-decoration:none;
+    line-height:1.3;
+  }
+  .src-link:hover{text-decoration:underline;}
+  .src-link[href*="google.com/maps"]{
+    color:#5b9bd5;
+    font-weight:600;
+  }
+  .popup-link[href*="google.com/maps"]{
+    color:#5b9bd5;
+    font-weight:600;
+  }
+  footer{
+    padding:8px 16px 12px;
+    font-size:10.5px;
+    color:var(--muted);
+    background:var(--panel);
+    border-top:1px solid var(--border);
+    flex-shrink:0;
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🔍 Металлопоиск в Польше — легальные зоны</h1>
+  <p>Побережье Балтики без разрешения · озёра — серая зона (на свой риск)</p>
+</header>
+
+<div class="tabs">
+  <div class="tab active" data-tab="map">Карта</div>
+  <div class="tab" data-tab="list">Список мест</div>
+  <div class="tab" data-tab="rules">Правила</div>
+</div>
+
+<div class="view active" id="view-map">
+  <div id="map"></div>
+  <div class="legend">
+    <span><span class="dot green"></span> Подтверждено (Urząd Morski)</span>
+    <span><span class="dot" style="background:#2ba3a3;"></span> Есть основание (Wody Polskie), но не безусловно</span>
+    <span><span class="dot orange"></span> Нужно согласие владельца</span>
+    <span><span class="dot" style="background:#d9534f;"></span> Не включать</span>
+  </div>
+</div>
+
+<div class="view" id="view-list">
+  <div class="list-wrap">
+    <div class="section-title">🟢 Балтийское побережье — офиц. подтверждение Urząd Morski</div>
+    <div id="coast-list"></div>
+    <div class="section-title">🟢 Сбор янтаря — офиц. подтверждение Urząd Morski</div>
+    <div id="amber-list"></div>
+    <div class="section-title">🔵 Внутренние воды — есть основание Wody Polskie (не безусловно)</div>
+    <div id="water-list"></div>
+    <div class="section-title">🔵 Дикие речные пляжи — существование подтверждено картой, часы НЕ установлены</div>
+    <div id="river-list"></div>
+    <div class="section-title">🔵 Из реестра GIS — офиц. kąpieliska (со своими часами работы)</div>
+    <div id="gis-list"></div>
+    <div class="section-title">🟡 Частные кемпинги/турбазы — уточните с администрацией</div>
+    <div id="park-list"></div>
+    <div class="section-title">🟡 Нужно разрешение — куда подавать</div>
+    <div id="permit-list"></div>
+    <div class="section-title">🔴 Запрещено — официальное основание</div>
+    <div id="restricted-list"></div>
+  </div>
+</div>
+
+<div class="view" id="view-rules">
+  <div class="list-wrap">
+    <div class="rules-box">
+      <h3>📋 Итоговая структура базы (зафиксировано)</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:6px 4px;">🟢 Морские пляжи</td><td style="padding:6px 4px;color:var(--muted);">Подтверждено Urzędy Morskie</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:6px 4px;">🟢 Сбор янтаря</td><td style="padding:6px 4px;color:var(--muted);">Подтверждено на разрешённых участках</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:6px 4px;">🔵 Вода озёр/рек</td><td style="padding:6px 4px;color:var(--muted);">Основание Wody Polskie — не безусловно</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:6px 4px;">🟡 Берег озера/реки</td><td style="padding:6px 4px;color:var(--muted);">Проверять владельца участка</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:6px 4px;">🟡 Кемпинг/частная территория</td><td style="padding:6px 4px;color:var(--muted);">Только с согласия владельца</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:6px 4px;">🟡 Гос. лес</td><td style="padding:6px 4px;color:var(--muted);">Согласие Nadleśniczy обязательно</td></tr>
+        <tr><td style="padding:6px 4px;">🔴 Нацпарки/охрана/запреты</td><td style="padding:6px 4px;color:var(--muted);">Не включать</td></tr>
+      </table>
+    </div>
+    <div class="rules-box">
+      <h3>🔑 Главный принцип (с 1 мая 2024) — и его ГРАНИЦА</h3>
+      <ul>
+        <li>Закон об охране памятников регулирует только поиск <b>исторических</b> предметов. Для современных вещей разрешение <b>консерватора</b> не нужно нигде.</li>
+        <li>НО: это не то же самое, что "разрешение вообще не нужно". Официальный FAQ Минкульта отдельно уточняет: <b>согласие владельца территории требуется всегда</b> — для пляжей, рек и озёр, включая городские водоёмы.</li>
+        <li>Поэтому "легально" на карте означает: не нужен pozwolenie konserwatora. Но если владелец земли (гмина, RZGW, частник) не давал согласия публично — юридически чисто только там, где такое согласие УЖЕ дано официально: побережье Балтики и сбор янтаря.</li>
+      </ul>
+    </div>
+    <div class="rules-box">
+      <h3>🔵 Внутренние воды — есть основание, но не безусловное разрешение (gov.pl, вопрос №15 FAQ Wody Polskie)</h3>
+      <ul>
+        <li>Точная цитата: "poszukiwania w wodach publicznych (rzeki, jeziora) drobnych przedmiotów (biżuterii, monet) za pomocą przyrządów ręcznych... w ramach spędzania wolnego czasu, powinny zostać zakwalifikowane jako wykonywane w ramach prawa powszechnego korzystania z wód."</li>
+        <li>Условия: физлицо, не для бизнеса, не повреждать дно/берег. Тогда pozwolenie wodnoprawne НЕ нужно.</li>
+        <li><b>Важный нюанс из того же документа:</b> если участок земли в ведении Wody Polskie НЕ покрыт водой (то есть сухой берег/пляж), нужно отдельное согласие RZGW. Вода и суша — разные режимы, даже когда управляющий один и тот же.</li>
+        <li>Практически: заходить в воду и искать там — подтверждённо легально. Копать на сухом песке пляжа у озера — эта часть остаётся под вопросом (спрашивать гмину/RZGW отдельно).</li>
+      </ul>
+    </div>
+    <div class="rules-box">
+      <h3>📄 Источники подтверждений</h3>
+      <ul>
+        <li><b><a href="https://www.gov.pl/web/kultura/przypadkowe-znalezienie-zabytku-i-poszukiwania-zabytkow" target="_blank" rel="noopener" style="color:var(--accent)">Ministerstwo Kultury i Dziedzictwa Narodowego (gov.pl) — официальный FAQ</a></b> — прямая цитата: "Szukam współczesnych monet i biżuterii na plażach. Czy potrzebuję pozwolenia? — Nie." Это первоисточник, гос. сайт министерства.</li>
+        <li><a href="https://orka.sejm.gov.pl/proc9.nsf/ustawy/3383_u.htm" target="_blank" rel="noopener" style="color:var(--accent)">Sejm RP — текст закона от 13.07.2023 (в силе с 1.05.2024)</a> — официальный текст нормы, ограничивающей сферу действия только "poszukiwaniami zabytków"</li>
+        <li><a href="https://formularze.net/sprawy/pozwolenie-wykrywacz" target="_blank" rel="noopener" style="color:var(--accent)">Formularze.net — разбор реформы закона в доступной форме</a></li>
+        <li><a href="https://www.umgdy.gov.pl/przedmioty_procedur/wykrywacz-metalu/" target="_blank" rel="noopener" style="color:var(--accent)">Urząd Morski w Gdyni — официальная страница процедур (gov.pl)</a></li>
+        <li><a href="https://www.zwiadowcahistorii.pl/na-plazach-z-wykrywaczem-metali-poszukacie-legalnie-i-bez-pozwolenia/" target="_blank" rel="noopener" style="color:var(--accent)">Zwiadowca Historii — коммюнике UM Gdynia</a></li>
+        <li><a href="https://koszalincity.pl/turystyka/wykrywacz-metali-na-plazy-czy-poszukiwania-bez-pozwolenia-sa-legalne/" target="_blank" rel="noopener" style="color:var(--accent)">KoszalinCity — коммюнике UM Szczecin</a></li>
+        <li><a href="https://finanse.wp.pl/chodza-w-wykrywaczami-metali-po-plazy-potrafia-zarobic-200-zl-dziennie-7068828444432992a" target="_blank" rel="noopener" style="color:var(--accent)">WP.pl Finanse — подтверждение от UM Szczecin</a></li>
+        <li><a href="https://odynce.pl/kiedy-mozesz-szukac-bez-pozwolen/" target="_blank" rel="noopener" style="color:var(--accent)">Odynce.pl — цитата разъяснения Wody Polskie о prawie powszechnego korzystania z wód</a></li>
+      </ul>
+    </div>
+    <div class="rules-box">
+      <h3>✅ Балтийское побережье — дополнительно подтверждено официально</h3>
+      <ul>
+        <li>Три Urzędy Morskie (Щецин, Слупск, Гдыня) официально подтвердили: искать современные предметы на песчаном пляже можно без письменного разрешения.</li>
+        <li>Зона поиска — только сам пляж. Не дюны, не лес, не скалы, не территория портов и пристаней.</li>
+        <li>Не мешать отдыхающим — лучше рано утром или вечером.</li>
+        <li>Обязательно закапывать за собой ямки.</li>
+        <li>Ищем только современные вещи (монеты, украшения). Похожее на артефакт — не выкапывать, сообщить в Wojewódzki Urząd Ochrony Zabytków.</li>
+      </ul>
+    </div>
+    <div class="rules-box">
+      <h3>🟠 Отдельно: сбор янтаря</h3>
+      <ul>
+        <li>Urząd Morski w Szczecinie отдельно подтверждает: собирать янтарь на пляже и мелководье без письменного разрешения можно.</li>
+        <li>Разрешён только ручной непрофессиональный сбор. Запрещены сита, помпы, промывочные установки и землеройная техника.</li>
+      </ul>
+    </div>
+    <div class="rules-box danger">
+      <h3>🚫 Исключения даже на побережье</h3>
+      <ul>
+        <li>Słowiński Park Narodowy (дюны у Łeby) — детекция запрещена полностью.</li>
+        <li>Центральный полигон Сил повітряних у Устки — запрещено.</li>
+        <li>Любые исторические/археологические объекты и охраняемые зоны — нужно разрешение воеводского консерватора памятников.</li>
+      </ul>
+    </div>
+    <div class="rules-box warn">
+      <h3>⚠️ Где начинаются ограничения</h3>
+      <ul>
+        <li>Национальные парки, заповедники, охраняемые зоны — запрещено независимо от цели поиска.</li>
+        <li>Частная территория — нужно согласие владельца.</li>
+        <li>Если участок земли/дно в ведении Wody Polskie (RZGW), формально нужно их согласие на использование — но это касается воды и дна, а не самого сухого песка пляжа, который обычно управляется гминой отдельно.</li>
+        <li><b>Гмина вправе ввести локальный regulamin,</b> который прямо запретит копать на конкретном пляже (пример — Kobylanka ниже). Такой локальный запрет отменяет общее правило именно для этого места.</li>
+        <li>Если найденный предмет похож на артефакт — прекратить копать и сообщить в Wojewódzki Urząd Ochrony Zabytków.</li>
+      </ul>
+    </div>
+    <div class="rules-box danger">
+      <h3>🌲 Третий режим: государственные леса (Lasy Państwowe)</h3>
+      <ul>
+        <li>Это отдельная категория земли — собственность Государственной казны, управляет ей Lasy Państwowe. Даже для поиска СОВРЕМЕННЫХ вещей (не артефактов) там формально нужно согласие конкретного nadleśnictwa (лесничества) — просто "гулять" можно, а искать вещи с раскопкой грунта — нет.</li>
+        <li>Основание: Ustawa o lasach + Zarządzenie nr 47 Dyrektora Generalnego Lasów Państwowych z 13.07.2018.</li>
+        <li>4 кемпинга в разделе "частные" — это НЕ государственный лес, а арендованная/частная территория турбазы. Но там всё равно стоит спросить администрацию напрямую — согласие владельца нужно всегда, кемпинг это или гос. лес.</li>
+        <li>Если хочешь искать именно в открытом гос. лесу — нужно писать заявление в конкретное nadleśnictwo по образцу с detect.pl.</li>
+      </ul>
+    </div>
+    <div class="rules-box danger">
+      <h3>🚫 Пример локального запрета</h3>
+      <ul>
+        <li>Gmina Kobylanka (озеро Miedwie, Zachodniopomorskie) официально запретила детекцию на своём пляже отдельным regulaminem — несмотря на то, что по общему закону современные вещи искать можно.</li>
+        <li>Перед поездкой в незнакомое место стоит проверить сайт конкретной гмины на предмет таких локальных исключений.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<footer>Информация собрана из открытых источников (Urząd Morski, юридические разборы). Не является юридической консультацией — законы могут меняться.</footer>
+
+<script>
+// --- Tabs work independently of the map, so navigation always works ---
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===name));
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active', v.id==='view-'+name));
+  if(name==='map' && window.__map){ setTimeout(()=>window.__map.invalidateSize(), 100); }
+}
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click', ()=>switchTab(t.dataset.tab));
+});
+
+// --- Data (shared by map and list views) ---
+const SRC_SZCZECIN = {
+  url: "https://koszalincity.pl/turystyka/wykrywacz-metali-na-plazy-czy-poszukiwania-bez-pozwolenia-sa-legalne/",
+  label: "Komunikat Urzędu Morskiego w Szczecinie (via koszalincity.pl)"
+};
+const SRC_SZCZECIN2 = {
+  url: "https://finanse.wp.pl/chodza-w-wykrywaczami-metali-po-plazy-potrafia-zarobic-200-zl-dziennie-7068828444432992a",
+  label: "Urząd Morski w Szczecinie: legalnie na pasie nadmorskim (wp.pl)"
+};
+const SRC_GDYNIA = {
+  url: "https://www.umgdy.gov.pl/przedmioty_procedur/wykrywacz-metalu/",
+  label: "Oficjalna procedura — Urząd Morski w Gdyni (gov.pl)"
+};
+const SRC_GDYNIA2 = {
+  url: "https://www.zwiadowcahistorii.pl/na-plazach-z-wykrywaczem-metali-poszukacie-legalnie-i-bez-pozwolenia/",
+  label: "Komunikat Urzędu Morskiego w Gdyni (via zwiadowcahistorii.pl)"
+};
+
+const SRC_AMBER = {
+  url: "https://www.gdynia.uzs.gov.pl/",
+  label: "Urząd Morski w Gdyni/Szczecinie — сбор янтаря на пляже разрешён без письменного разрешения (ручной сбор, без сит/помп/техники)"
+};
+
+const coastSpots = [
+  {name:"Świnoujście", lat:53.9222299, lng:14.253488, note:"Западный край побережья, у границы с Германией", src:SRC_SZCZECIN},
+  {name:"Międzyzdroje", lat:53.9245278, lng:14.4261234, note:"Широкий пляж, популярен у детектористов", src:SRC_SZCZECIN},
+  {name:"Dziwnów", lat:54.0246893, lng:14.7373968, note:"Спокойный участок побережья", src:SRC_SZCZECIN},
+  {name:"Pobierowo", lat:54.0614964, lng:14.9288123, note:"Тихий курортный посёлок", src:SRC_SZCZECIN},
+  {name:"Rewal", lat:54.0832077, lng:15.0135627, note:"Длинный пляж, до 100м шириной", src:SRC_SZCZECIN},
+  {name:"Niechorze", lat:54.0991704, lng:15.0900841, note:"Белый песок, известный маяк рядом", src:SRC_SZCZECIN},
+  {name:"Pogorzelica", address:"Plażowa 11, 72-350 Pogorzelica", lat:54.1046463, lng:15.1143185, note:"Сосновый лес у дюн, спокойный пляж", src:SRC_SZCZECIN},
+  {name:"Mrzeżyno", lat:54.1437639, lng:15.2901085, note:"Устье реки Rega", src:SRC_SZCZECIN},
+  {name:"Dźwirzyno", lat:54.163037, lng:15.415256, note:"Широкий белый пляж", src:SRC_SZCZECIN},
+  {name:"Ustronie Morskie", lat:54.2180442, lng:15.7606372, note:"Между Колобжегом и Мельно", src:SRC_SZCZECIN},
+  {name:"Kołobrzeg", lat:54.1898306, lng:15.6030022, note:"Один из самых популярных для поиска", src:SRC_SZCZECIN2},
+  {name:"Gąski", lat:54.2435609, lng:15.8725368, note:"Маленький, немноголюдный пляж, маяк рядом", src:SRC_SZCZECIN},
+  {name:"Sarbinowo", address:"Promenada nadmorska, 76-034 Sarbinowo", lat:54.2495271, lng:15.9559281, note:"Длинный чистый пляж", src:SRC_SZCZECIN},
+  {name:"Chłopy", address:"Kapitańska 61, 76-034 Chłopy", lat:54.2532813, lng:15.9888716, note:"Каменистый участок, рыбацкие лодки", src:SRC_SZCZECIN},
+  {name:"Mielno", lat:54.2624331, lng:16.0518176, note:"Широкий песчаный пляж", src:SRC_SZCZECIN},
+  {name:"Darłowo", lat:54.4419097, lng:16.3853263, note:"Мелко, семейный пляж", src:SRC_SZCZECIN},
+  {name:"Wicie", address:"76-150 Wicie", lat:54.5080712, lng:16.4652444, note:"Дикий пляж, мало людей", src:SRC_SZCZECIN},
+  {name:"Jarosławiec", lat:54.5410514, lng:16.5289856, note:"Белый песок, чистая вода", src:SRC_SZCZECIN},
+  {name:"Ustka", lat:54.5887857, lng:16.8569305, note:"Граница зон Szczecin/Gdynia", src:SRC_SZCZECIN2},
+  {name:"Rowy", lat:54.6678055, lng:17.0472873, note:"Только сам пляж — рядом Słowiński PN (см. красную зону)", src:SRC_GDYNIA},
+  {name:"Łeba", lat:54.7683197, lng:17.5603225, note:"Только сам пляж — дюны нацпарка запрещены", src:SRC_GDYNIA},
+  {name:"Dębki", lat:54.8331663, lng:18.0882999, note:"Один из самых красивых участков побережья", src:SRC_GDYNIA},
+  {name:"Karwia", address:"Rybaków 1, 84-105 Władysławowo", lat:54.8327295, lng:18.2090091, note:"Широкий пляж", src:SRC_GDYNIA},
+  {name:"Jastrzębia Góra", lat:54.8355799, lng:18.2963352, note:"Живописный обрывистый берег", src:SRC_GDYNIA},
+  {name:"Władysławowo", lat:54.7999861, lng:18.4095961, note:"Крупный курортный город", src:SRC_GDYNIA},
+  {name:"Chałupy", lat:54.763818, lng:18.502233, note:"На косе Hel, кайт-спот", src:SRC_GDYNIA},
+  {name:"Kuźnica", address:"Helska 35, 84-130 Jastarnia", lat:54.7354503, lng:18.5836087, note:"Залив, тихая вода", src:SRC_GDYNIA},
+  {name:"Jastarnia", address:"84-140 Jastarnia", lat:54.7065072, lng:18.668972, note:"Морская сторона косы Hel", src:SRC_GDYNIA},
+  {name:"Rewa", lat:54.6322677, lng:18.5135082, note:"Залив Пуцка, спокойная вода", src:SRC_GDYNIA},
+  {name:"Puck", lat:54.7216045, lng:18.4197441, note:"Внутренняя часть залива", src:SRC_GDYNIA},
+  {name:"Orłowo (Gdynia)", lat:54.4764422, lng:18.5531909, note:"Клифф Орлово, южная часть Гдыни", src:SRC_GDYNIA},
+  {name:"Brzeźno (Gdańsk)", lat:54.4101743, lng:18.6349539, note:"Городской пляж Гданьска, у трамвая", src:SRC_GDYNIA2},
+  {name:"Stogi (Gdańsk)", lat:54.3774141, lng:18.7242768, note:"Широкий пляж рядом с портом", src:SRC_GDYNIA2},
+  {name:"Sobieszewo (Wyspa Sobieszewska)", lat:54.3415566, lng:18.8731909, note:"Остров, дикие малолюдные пляжи", src:SRC_GDYNIA2},
+  {name:"Sopot (Kamienny Potok)", lat:54.4585613, lng:18.5625184, note:"Зона Urząd Morski Gdynia", src:SRC_GDYNIA},
+  {name:"Gdynia", lat:54.515947, lng:18.550527, note:"Городской пляж, много людей — много потерь", src:SRC_GDYNIA},
+  {name:"Hel", lat:54.6038937, lng:18.8264998, note:"Восточный конец косы Hel", src:SRC_GDYNIA},
+  {name:"Jurata", lat:54.6857241, lng:18.7180119, note:"Курортный пляж на косе", src:SRC_GDYNIA},
+  {name:"Stegna", lat:54.3469155, lng:19.113657, note:"Мелководье, семейный пляж", src:SRC_GDYNIA2},
+  {name:"Sztutowo", lat:54.3502466, lng:19.1695607, note:"Тихий, спокойный участок", src:SRC_GDYNIA2},
+  {name:"Krynica Morska", lat:54.3881312, lng:19.4443725, note:"Курортный город на Вислинской косе — последняя безопасная точка перед погранзоной", src:SRC_GDYNIA2}
+];
+
+const amberSpots = [
+  {name:"Сбор янтаря — всё побережье Балтики", lat:54.35, lng:16.5, note:"Ручной сбор на пляже и мелководье разрешён без письменного разрешения. Запрещены сита, помпы, промывочные установки и землеройная техника.", src:SRC_AMBER}
+];
+
+const SRC_MODERN_LAW = {
+  url: "https://www.gov.pl/web/kultura/przypadkowe-znalezienie-zabytku-i-poszukiwania-zabytkow",
+  label: "Ministerstwo Kultury i Dziedzictwa Narodowego (gov.pl) — официальный FAQ: поиск современных монет/украшений на пляжах не требует pozwolenia konserwatora"
+};
+
+const SRC_WATER_LAW = {
+  url: "https://www.gov.pl/web/wody-polskie/faq",
+  label: "Wody Polskie, официальный FAQ на gov.pl (вопрос №15): хоббийный поиск в воде рек/озёр разрешён по праву общего пользования водой — без pozwolenia wodnoprawnego"
+};
+
+const waterSpots = [
+  {name:"Zalew Zegrzyński (Jachranka)", lat:52.4767, lng:21.0397, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Сухой берег/пляж — отдельная собственность (гмина), уточняйте — Mazowieckie", src:SRC_WATER_LAW},
+  {name:"Zalew Zegrzyński (Rynia)", lat:52.4517, lng:21.0783, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Сухой берег — уточняйте у гмины — Mazowieckie", src:SRC_WATER_LAW},
+  {name:"Jeziorko Czerniakowskie", lat:52.1783, lng:21.0447, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Берег — уточняйте — Mazowieckie", src:SRC_WATER_LAW},
+  {name:"Poniatówka (Wisła, Warszawa)", lat:52.2365285, lng:21.0420832, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Берег — уточняйте — Mazowieckie", src:SRC_WATER_LAW},
+  {name:"Jezioro Ukiel (Olsztyn)", lat:53.7813736, lng:20.4443758, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Берег — уточняйте — Warmińsko-Mazurskie", src:SRC_WATER_LAW},
+  {name:"Mikołajki (Mazury)", lat:53.7994940, lng:21.5682837, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Берег — уточняйте — Warmińsko-Mazurskie", src:SRC_WATER_LAW},
+  {name:"Giżycko (Mazury)", lat:54.0326269, lng:21.7684362, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Берег — уточняйте — Warmińsko-Mazurskie", src:SRC_WATER_LAW},
+  {name:"Kiekrz (Poznań)", lat:52.4590672, lng:16.7951808, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Берег — уточняйте — Wielkopolskie", src:SRC_WATER_LAW},
+  {name:"Jezioro Malta (Poznań)", lat:52.4021955, lng:16.9698904, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Берег — уточняйте — Wielkopolskie", src:SRC_WATER_LAW},
+  {name:"Jezioro Strzeszyńskie (Poznań)", lat:52.4608437, lng:16.8225132, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Берег — уточняйте — Wielkopolskie", src:SRC_WATER_LAW},
+  {name:"Zalew Koronowski (Pieczyska)", lat:53.3447813, lng:17.9722039, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Берег — уточняйте — Kujawsko-Pomorskie", src:SRC_WATER_LAW},
+  {name:"Jezioro Chełmżyńskie", lat:53.1702831, lng:18.6657411, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Берег — уточняйте — Kujawsko-Pomorskie", src:SRC_WATER_LAW},
+  {name:"Jezioro Łagowskie", lat:52.3315427, lng:15.2904374, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Берег — уточняйте — Lubuskie", src:SRC_WATER_LAW},
+  {name:"Sława (Lubuskie)", lat:51.8790277, lng:16.0599089, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Берег — уточняйте — Lubuskie", src:SRC_WATER_LAW},
+  {name:"Stara Odra Beach (Wrocław)", lat:51.1341243, lng:17.039602, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Берег — уточняйте — Dolnośląskie", src:SRC_WATER_LAW},
+  {name:"Zakrzówek (Kraków)", lat:50.0378849, lng:19.9095703, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Берег — уточняйте — Małopolskie", src:SRC_WATER_LAW},
+  {name:"Balaton Śląski (Sosnowiec)", lat:50.2745741, lng:19.2531155, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Берег — уточняйте — Śląskie", src:SRC_WATER_LAW},
+  {name:"Pogoria (Dąbrowa Górnicza)", lat:50.3564157, lng:19.2392053, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Берег — уточняйте — Śląskie", src:SRC_WATER_LAW},
+  {name:"Zalew Sulejowski (Smardzewice)", lat:51.4710123, lng:20.0115273, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Берег — уточняйте — Łódzkie", src:SRC_WATER_LAW},
+  {name:"Jezioro Dąbie (Szczecin)", lat:53.4538212, lng:14.6692962, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Берег — уточняйте — Zachodniopomorskie", src:SRC_WATER_LAW},
+  {name:"Zalew Zemborzycki (Lublin)", lat:51.1770107, lng:22.5266323, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Берег — уточняйте — Lubelskie", src:SRC_WATER_LAW},
+  {name:"Zalew Siemianówka", lat:52.9229029, lng:23.8103256, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Берег — уточняйте — Podlaskie", src:SRC_WATER_LAW},
+  {name:"Jezioro Chańcza", lat:50.6456383, lng:21.0456878, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Берег — уточняйте — Świętokrzyskie", src:SRC_WATER_LAW},
+  {name:"Jezioro Solińskie", lat:49.3689308, lng:22.4549418, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Берег — уточняйте. Крупнейшее искусств. озеро Польши — Podkarpackie", src:SRC_WATER_LAW},
+  {name:"Jezioro Turawskie", lat:50.7234069, lng:18.1177373, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Берег — уточняйте — Opolskie", src:SRC_WATER_LAW}
+];
+
+const SRC_MAP_ONLY = {
+  url: "https://www.google.com/maps",
+  label: "Существование подтверждено картой/отзывами посетителей (Google Maps). Часы работы: НЕ УСТАНОВЛЕНЫ в найденных источниках. Запрет на детектор: не найден, но и не проверялся regulamin — если он вообще существует для этого места"
+};
+
+const riverSpots = [
+  {name:"Wisła — dzika plaża (Słubice, Płock)", lat:52.4547063, lng:19.8907179, note:"Река Висла. Удалённость от города: в черте Słubic/Płocka, не глушь", src:SRC_MAP_ONLY},
+  {name:"Jezioro Wielimie — Wild beach (Gwda Wielka)", lat:53.7503532, lng:16.7898749, note:"⚠️ Гмина ввела запрет на кемпинг/ночёвку здесь из-за мусора — сам поиск detector'ом отдельно не упомянут, но место конфликтное", src:SRC_MAP_ONLY},
+  {name:"Warta — plaża miejska (Puszczykowo)", lat:52.2701488, lng:16.8747425, note:"Река Warta под Познанью. Тихое место, мало людей по отзывам", src:SRC_MAP_ONLY},
+  {name:"Bug — plaża miejska (Wyszków)", lat:52.5897845, lng:21.4599356, note:"Река Bug", src:SRC_MAP_ONLY},
+  {name:"Narew — Dzika Plaża 'Cicha Woda' (Pułtusk)", lat:52.7224856, lng:21.098402, note:"Река Narew, 63 км. Известна как замусоренная — приезжай с пакетом для мусора", src:SRC_MAP_ONLY},
+  {name:"Pilica — dzika plaża (Inowłódz)", lat:51.5263541, lng:20.2495844, note:"Река Pilica, вне крупного города", src:SRC_MAP_ONLY}
+];
+
+const SRC_GIS = {
+  url: "https://sk.gis.gov.pl/kapieliska/lista",
+  label: "GIS Serwis Kąpieliskowy (gov.pl) — официальный реестр 717 kąpielisk. ВНИМАНИЕ: это официально зарегистрированные зоны купания СО СВОИМИ часами работы — не 'дикие' места. Информация про ворота/забор/безлюдность не подтверждена официально, проверяйте на месте"
+};
+
+const gisSpots = [
+  {name:"Jezioro Gołdopiwo (Kruklanki)", lat:54.1099651, lng:21.944031, note:"Warmińsko-Mazurskie, pow. giżycki. Офиц. часы: Пн-Ср,Пт-Вс 10-18, Чт 8-18", src:SRC_GIS},
+  {name:"Jezioro Białe (Okuninka, Włodawa)", lat:51.4979389, lng:23.5379158, note:"Lubelskie, pow. włodawski. Популярное туристическое озеро, шумно по вечерам", src:SRC_GIS},
+  {name:"Zbiornik Balaton (Dobrzeń Wielki)", lat:50.7717582, lng:17.8614722, note:"Opolskie, pow. opolski. Офиц. часы 11-19, купание под присмотром спасателей", src:SRC_GIS},
+  {name:"Zbiornik Adriatyk (Częstochowa)", lat:50.81111, lng:19.0726173, note:"Śląskie. Городской парк Lisiniec, офиц. часы 10-20", src:SRC_GIS},
+  {name:"Jezioro Bielawskie (Bielawa)", lat:50.6805362, lng:16.5947817, note:"Dolnośląskie, pow. dzierżoniowski. У подножья гор Sowie, офиц. часы 10-19", src:SRC_GIS},
+  {name:"Jezioro Niegocin (Rydzewo, Giżycko)", lat:53.9655848, lng:21.7637389, note:"Warmińsko-Mazurskie, pow. giżycki. Мазурское озеро, много берега вне офиц. зоны", src:SRC_GIS},
+  {name:"Jezioro Serwy (Sucha Rzeczka, Augustów)", lat:53.8906282, lng:23.1919711, note:"Podlaskie, pow. augustowski. Одно из самых чистых озёр Польши", src:SRC_GIS},
+  {name:"Zalew Andrzejówka (Chmielnik)", lat:50.5931169, lng:20.7478745, note:"Świętokrzyskie, pow. kielecki. Небольшое живописное водохранилище", src:SRC_GIS}
+];
+
+const restrictedSpots = [
+  {name:"Jezioro Miedwie (Gmina Kobylanka)", address:"Rynek 1, 73-108 Kobylanka", lat:53.4064, lng:14.9302, note:"Локальный regulamin гмины прямо ЗАПРЕЩАЕТ поиск на этом пляже", srcUrl:"https://kobylanka.pl/", srcLabel:"Urząd Gminy Kobylanka — официальный сайт (regulamin plaży)"},
+  {name:"Słowiński Park Narodowy (Łeba/Rowy, дюны)", address:"Bohaterów Warszawy 1A, 76-214 Smołdzino", lat:54.7280, lng:17.4280, note:"Национальный парк — любая детекция запрещена законом об охране природы, включая дюны у пляжа", srcUrl:"https://spn.gov.pl/regulamin", srcLabel:"Słowiński Park Narodowy — официальный regulamin (spn.gov.pl)"},
+  {name:"Piaski (пас drogi granicznej)", address:"82-120 Krynica Morska, okolice granicy z Obwodem Kaliningradzkim", lat:54.4557642, lng:19.6350065, note:"Погранполоса с Калининградской обл. РФ — отдельный запретный режим Straży Granicznej, не связан с Urzędem Morskim. Табличpy 'Granica państwa — przekraczanie zabronione' и 'Pas drogi granicznej — wejście zabronione'", srcUrl:"https://pl.wikipedia.org/wiki/Pas_drogi_granicznej", srcLabel:"Ustawa o ochronie granicy państwowej — режим pasa drogi granicznej"}
+];
+
+const permitSpots = [
+  {name:"Nadleśnictwo Elbląg (гос. лес, Mierzeja Wiślana)", address:"ul. Marymoncka 5, 82-300 Elbląg", lat:54.1725, lng:19.4045, note:"Гос. лес — нужно письменное заявление в лесничество даже для современных вещей. Ответ приходит в течение 30 дней.", srcUrl:"https://www.gov.pl/web/nadlesnictwo-elblag/kontakt", srcLabel:"Nadleśnictwo Elbląg — официальный контакт для подачи заявления (gov.pl)"},
+  {name:"Любое государственное лесничество (общий образец)", address:"Форма заявления одинаковая для всех ок. 430 nadleśnictw Польши", lat:52.0, lng:19.5, note:"Найти нужное лесничество по адресу леса и отправить wniosek о udostępnienie terenu", srcUrl:"https://www.detect.pl/zgoda-lasow-panstwowych", srcLabel:"DETECT.pl — образец заявления в Nadleśnictwo + список всех лесничеств"},
+  {name:"RZGW (реки/озёра в ведении Wody Polskie)", address:"Zależnie od regionu — RZGW Szczecin/Gdańsk/Warszawa/Kraków/Wrocław/Poznań", lat:52.4, lng:19.0, note:"Если предмет поиска — дно водоёма (не просто пляж) в управлении Wody Polskie, нужна их отдельная zgoda", srcUrl:"https://www.wody.gov.pl/nasze-dzialania/pozwolenia-wodnoprawne", srcLabel:"Wody Polskie — официальная страница подачи заявлений (gov)"}
+];
+
+const parkSpots = [
+  {name:"Pole biwakowe Lipa 1 (Wdzydze Tucholskie)", address:"Lipa 1, 83-442 Wdzydze Tucholskie", lat:53.9938889, lng:17.9249946, note:"Частный кемпинг у озера — уточните с администрацией можно ли использовать детектор на территории", src:SRC_WATER_LAW},
+  {name:"Ośrodek turystyczny Echo (Zwierzyniec)", address:"Biłgorajska 5, 22-470 Zwierzyniec", lat:50.6091907, lng:22.9620043, note:"Частная турбаза, Roztocze — уточните с администрацией", src:SRC_WATER_LAW},
+  {name:"Pole biwakowe Na Sygulnej (Mizerna)", address:"34-436 Mizerna", lat:49.455317, lng:20.2838252, note:"Частный кемпинг у реки, Pieniny — уточните с администрацией", src:SRC_WATER_LAW},
+  {name:"Camping Jawor (Solina)", address:"nr 248, 38-612 Solina", lat:49.3936412, lng:22.4591416, note:"Частный кемпинг у озера — уточните с администрацией", src:SRC_WATER_LAW}
+];
+
+// --- Render list view (independent of map) ---
+const coastList = document.getElementById('coast-list');
+coastSpots.forEach(s=>{
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.innerHTML = `<div class="card-title">${s.name}<span class="badge">без разрешения</span></div><div class="card-note">${s.address?'📍 '+s.address+'<br>':''}${s.note}</div><a class="src-link" href="${s.src.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">📄 Источник: ${s.src.label}</a><a class="src-link" href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🧭 Маршрут</a>`;
+  el.onclick = ()=>{ switchTab('map'); if(window.__map) window.__map.setView([s.lat,s.lng], 12); };
+  coastList.appendChild(el);
+});
+const amberList = document.getElementById('amber-list');
+amberSpots.forEach(s=>{
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.innerHTML = `<div class="card-title">${s.name}<span class="badge">без разрешения</span></div><div class="card-note">${s.note}</div><a class="src-link" href="${s.src.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">📄 ${s.src.label}</a><a class="src-link" href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🧭 Маршрут</a>`;
+  el.onclick = ()=>{ switchTab('map'); if(window.__map) window.__map.setView([s.lat,s.lng], 7); };
+  amberList.appendChild(el);
+});
+const waterList = document.getElementById('water-list');
+waterSpots.forEach(s=>{
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.innerHTML = `<div class="card-title">${s.name}<span class="badge" style="background:rgba(43,163,163,.15);color:#2ba3a3;">вода: есть основание</span></div><div class="card-note">${s.note}</div><a class="src-link" href="${s.src.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">📄 ${s.src.label}</a><a class="src-link" href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🧭 Маршрут</a>`;
+  el.onclick = ()=>{ switchTab('map'); if(window.__map) window.__map.setView([s.lat,s.lng], 12); };
+  waterList.appendChild(el);
+});
+const parkList = document.getElementById('park-list');
+parkSpots.forEach(s=>{
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.innerHTML = `<div class="card-title">${s.name}<span class="badge" style="background:rgba(224,167,46,.15);color:var(--accent2);">уточнить с администрацией</span></div><div class="card-note">${s.address?'📍 '+s.address+'<br>':''}${s.note}</div><a class="src-link" href="${s.src.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">📄 ${s.src.label}</a><a class="src-link" href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🧭 Маршрут</a>`;
+  el.onclick = ()=>{ switchTab('map'); if(window.__map) window.__map.setView([s.lat,s.lng], 12); };
+  parkList.appendChild(el);
+});
+const restrictedList = document.getElementById('restricted-list');
+restrictedSpots.forEach(s=>{
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.innerHTML = `<div class="card-title">${s.name}<span class="badge" style="background:rgba(217,83,79,.15);color:var(--danger);">запрещено</span></div><div class="card-note">📍 ${s.address}<br>${s.note}</div><a class="src-link" href="${s.srcUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">📄 ${s.srcLabel}</a><a class="src-link" href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🧭 Маршрут</a>`;
+  el.onclick = ()=>{ switchTab('map'); if(window.__map) window.__map.setView([s.lat,s.lng], 11); };
+  restrictedList.appendChild(el);
+});
+const riverList = document.getElementById('river-list');
+riverSpots.forEach(s=>{
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.innerHTML = `<div class="card-title">${s.name}<span class="badge" style="background:rgba(43,163,163,.15);color:#2ba3a3;">карта/отзывы</span></div><div class="card-note">${s.note}<br><span style="color:var(--muted);font-size:11px;">📄 ${s.src.label}</span></div><a class="src-link" href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🧭 Маршрут</a>`;
+  el.onclick = ()=>{ switchTab('map'); if(window.__map) window.__map.setView([s.lat,s.lng], 12); };
+  riverList.appendChild(el);
+});
+const gisList = document.getElementById('gis-list');
+gisSpots.forEach(s=>{
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.innerHTML = `<div class="card-title">${s.name}<span class="badge" style="background:rgba(43,163,163,.15);color:#2ba3a3;">офиц. kąpielisko</span></div><div class="card-note">${s.note}</div><a class="src-link" href="${s.src.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">📄 ${s.src.label}</a><a class="src-link" href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🧭 Маршрут</a>`;
+  el.onclick = ()=>{ switchTab('map'); if(window.__map) window.__map.setView([s.lat,s.lng], 12); };
+  gisList.appendChild(el);
+});
+const permitList = document.getElementById('permit-list');
+permitSpots.forEach(s=>{
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.innerHTML = `<div class="card-title">${s.name}<span class="badge" style="background:rgba(224,167,46,.15);color:var(--accent2);">нужно разрешение</span></div><div class="card-note">📍 ${s.address}<br>${s.note}</div><a class="src-link" href="${s.srcUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🔗 Подать заявление: ${s.srcLabel}</a><a class="src-link" href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🧭 Маршрут</a>`;
+  el.onclick = ()=>{ switchTab('map'); if(window.__map) window.__map.setView([s.lat,s.lng], 8); };
+  permitList.appendChild(el);
+});
+
+// --- Map init, isolated so a load failure doesn't break the rest of the app ---
+function initMap(){
+  try{
+    if(typeof L === 'undefined') throw new Error('Leaflet not loaded');
+    const map = L.map('map', {zoomControl:true}).setView([52.3, 19.3], 6);
+    window.__map = map;
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      subdomains: ['a','b','c'],
+      maxZoom: 19
+    }).addTo(map);
+
+    function greenIcon(){
+      return L.divIcon({className:'', html:'<div style="width:14px;height:14px;border-radius:50%;background:#3ba55d;border:2px solid #0f1720;"></div>', iconSize:[14,14]});
+    }
+    function orangeIcon(){
+      return L.divIcon({className:'', html:'<div style="width:14px;height:14px;border-radius:50%;background:#e0a72e;border:2px solid #0f1720;"></div>', iconSize:[14,14]});
+    }
+    function redIcon(){
+      return L.divIcon({className:'', html:'<div style="width:14px;height:14px;border-radius:50%;background:#d9534f;border:2px solid #0f1720;"></div>', iconSize:[14,14]});
+    }
+
+    function tealIcon(){
+      return L.divIcon({className:'', html:'<div style="width:14px;height:14px;border-radius:50%;background:#2ba3a3;border:2px solid #0f1720;"></div>', iconSize:[14,14]});
+    }
+    coastSpots.forEach(s=>{
+      L.marker([s.lat, s.lng], {icon:greenIcon()}).addTo(map)
+        .bindPopup(`<div class="popup-title">${s.name}</div><div class="popup-note">${s.address?'📍 '+s.address+'<br>':''}${s.note}</div><a class="popup-link" href="${s.src.url}" target="_blank" rel="noopener">📄 ${s.src.label}</a><br><a class="popup-link" href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank" rel="noopener">🧭 Маршрут</a>`);
+    });
+    amberSpots.forEach(s=>{
+      L.marker([s.lat, s.lng], {icon:greenIcon()}).addTo(map)
+        .bindPopup(`<div class="popup-title">${s.name}</div><div class="popup-note">${s.note}</div><a class="popup-link" href="${s.src.url}" target="_blank" rel="noopener">📄 ${s.src.label}</a><br><a class="popup-link" href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank" rel="noopener">🧭 Маршрут</a>`);
+    });
+    waterSpots.forEach(s=>{
+      L.marker([s.lat, s.lng], {icon:tealIcon()}).addTo(map)
+        .bindPopup(`<div class="popup-title">${s.name}</div><div class="popup-note">${s.note}</div><a class="popup-link" href="${s.src.url}" target="_blank" rel="noopener">📄 ${s.src.label}</a><br><a class="popup-link" href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank" rel="noopener">🧭 Маршрут</a>`);
+    });
+    parkSpots.forEach(s=>{
+      L.marker([s.lat, s.lng], {icon:orangeIcon()}).addTo(map)
+        .bindPopup(`<div class="popup-title">${s.name}</div><div class="popup-note">${s.address?'📍 '+s.address+'<br>':''}${s.note}</div><a class="popup-link" href="${s.src.url}" target="_blank" rel="noopener">📄 ${s.src.label}</a><br><a class="popup-link" href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank" rel="noopener">🧭 Маршрут</a>`);
+    });
+    restrictedSpots.forEach(s=>{
+      L.marker([s.lat, s.lng], {icon:redIcon()}).addTo(map)
+        .bindPopup(`<div class="popup-title">${s.name}</div><div class="popup-note">📍 ${s.address}<br>${s.note}</div><a class="popup-link" href="${s.srcUrl}" target="_blank" rel="noopener">📄 ${s.srcLabel}</a><br><a class="popup-link" href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank" rel="noopener">🧭 Маршрут</a>`);
+    });
+    riverSpots.forEach(s=>{
+      L.marker([s.lat, s.lng], {icon:tealIcon()}).addTo(map)
+        .bindPopup(`<div class="popup-title">${s.name}</div><div class="popup-note">${s.note}<br><span style="color:#8ea0b3;font-size:11px;">📄 ${s.src.label}</span></div><a class="popup-link" href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank" rel="noopener">🧭 Маршрут</a>`);
+    });
+    gisSpots.forEach(s=>{
+      L.marker([s.lat, s.lng], {icon:tealIcon()}).addTo(map)
+        .bindPopup(`<div class="popup-title">${s.name}</div><div class="popup-note">${s.note}</div><a class="popup-link" href="${s.src.url}" target="_blank" rel="noopener">📄 ${s.src.label}</a><br><a class="popup-link" href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank" rel="noopener">🧭 Маршрут</a>`);
+    });
+    permitSpots.forEach(s=>{
+      L.marker([s.lat, s.lng], {icon:orangeIcon()}).addTo(map)
+        .bindPopup(`<div class="popup-title">${s.name}</div><div class="popup-note">📍 ${s.address}<br>${s.note}</div><a class="popup-link" href="${s.srcUrl}" target="_blank" rel="noopener">🔗 Подать заявление: ${s.srcLabel}</a><br><a class="popup-link" href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank" rel="noopener">🧭 Маршрут</a>`);
+    });
+  } catch(err){
+    const mapEl = document.getElementById('map');
+    if(mapEl){
+      mapEl.innerHTML = '<div style="padding:24px;color:#8ea0b3;font-size:13px;text-align:center;">⚠️ Карта не загрузилась (нет соединения с картографическим сервисом).<br><br>Список мест доступен во вкладке «Список мест».</div>';
+    }
+  }
+}
+
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', initMap);
+} else {
+  initMap();
+}
+</script>
+</body>
+</html>
