@@ -272,6 +272,7 @@
         <tr style="border-bottom:1px solid var(--border);"><td style="padding:6px 4px;">🟡 Берег озера/реки</td><td style="padding:6px 4px;color:var(--muted);">Проверять владельца участка</td></tr>
         <tr style="border-bottom:1px solid var(--border);"><td style="padding:6px 4px;">🟡 Кемпинг/частная территория</td><td style="padding:6px 4px;color:var(--muted);">Только с согласия владельца</td></tr>
         <tr style="border-bottom:1px solid var(--border);"><td style="padding:6px 4px;">🟡 Гос. лес</td><td style="padding:6px 4px;color:var(--muted);">Согласие Nadleśniczy обязательно</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:6px 4px;">⚪ Дикие пляжи (реки)</td><td style="padding:6px 4px;color:var(--muted);">НЕ проверено официально — только карта/отзывы</td></tr>
         <tr><td style="padding:6px 4px;">🔴 Нацпарки/охрана/запреты</td><td style="padding:6px 4px;color:var(--muted);">Не включать</td></tr>
       </table>
     </div>
@@ -456,7 +457,7 @@ const SRC_WATER_LAW = {
 const waterSpots = [
   {name:"Zalew Zegrzyński (Jachranka)", lat:52.4767, lng:21.0397, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Сухой берег/пляж — отдельная собственность (гмина), уточняйте — Mazowieckie", src:SRC_WATER_LAW},
   {name:"Zalew Zegrzyński (Rynia)", lat:52.4517, lng:21.0783, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Сухой берег — уточняйте у гмины — Mazowieckie", src:SRC_WATER_LAW},
-  {name:"Jeziorko Czerniakowskie", lat:52.1783, lng:21.0447, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Берег — уточняйте — Mazowieckie", src:SRC_WATER_LAW},
+  {name:"Jeziorko Czerniakowskie", lat:52.1922198, lng:21.0712321, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Берег — уточняйте — Mazowieckie", src:SRC_WATER_LAW},
   {name:"Poniatówka (Wisła, Warszawa)", lat:52.2365285, lng:21.0420832, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Берег — уточняйте — Mazowieckie", src:SRC_WATER_LAW},
   {name:"Jezioro Ukiel (Olsztyn)", lat:53.7813736, lng:20.4443758, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Берег — уточняйте — Warmińsko-Mazurskie", src:SRC_WATER_LAW},
   {name:"Mikołajki (Mazury)", lat:53.7994940, lng:21.5682837, note:"🔵 В воде: есть основание Wody Polskie (личн. цели, не бизнес, без повреждения дна/берега). 🟡 Берег — уточняйте — Warmińsko-Mazurskie", src:SRC_WATER_LAW},
@@ -487,6 +488,7 @@ const SRC_MAP_ONLY = {
 };
 
 const riverSpots = [
+  {name:"Jezioro Żarnowieckie (Władysławowo)", lat:54.7697655, lng:18.0466655, note:"⚠️ Рядом недостроенная АЭС Żarnowiec, водохранилище ГАЭС. Малолюдно, дико", src:SRC_MAP_ONLY},
   {name:"Wisła — dzika plaża (Słubice, Płock)", lat:52.4547063, lng:19.8907179, note:"Река Висла. Удалённость от города: в черте Słubic/Płocka, не глушь", src:SRC_MAP_ONLY},
   {name:"Jezioro Wielimie — Wild beach (Gwda Wielka)", lat:53.7503532, lng:16.7898749, note:"⚠️ Гмина ввела запрет на кемпинг/ночёвку здесь из-за мусора — сам поиск detector'ом отдельно не упомянут, но место конфликтное", src:SRC_MAP_ONLY},
   {name:"Warta — plaża miejska (Puszczykowo)", lat:52.2701488, lng:16.8747425, note:"Река Warta под Познанью. Тихое место, мало людей по отзывам", src:SRC_MAP_ONLY},
@@ -532,12 +534,15 @@ const moreLakeSpots = [
 
 const restrictedSpots = [
   {name:"Jezioro Miedwie (Gmina Kobylanka)", address:"Rynek 1, 73-108 Kobylanka", lat:53.4064, lng:14.9302, note:"Локальный regulamin гмины прямо ЗАПРЕЩАЕТ поиск на этом пляже", srcUrl:"https://kobylanka.pl/", srcLabel:"Urząd Gminy Kobylanka — официальный сайт (regulamin plaży)"},
-  {name:"Słowiński Park Narodowy (Łeba/Rowy, дюны)", address:"Bohaterów Warszawy 1A, 76-214 Smołdzino", lat:54.7280, lng:17.4280, note:"Национальный парк — любая детекция запрещена законом об охране природы, включая дюны у пляжа", srcUrl:"https://spn.gov.pl/regulamin", srcLabel:"Słowiński Park Narodowy — официальный regulamin (spn.gov.pl)"},
+  {name:"Słowiński Park Narodowy (Łeba/Rowy, дюны)", address:"Bohaterów Warszawy 1A, 76-214 Smołdzino", lat:54.7001729, lng:17.3169313, note:"Национальный парк — любая детекция запрещена законом об охране природы, включая дюны у пляжа", srcUrl:"https://spn.gov.pl/regulamin", srcLabel:"Słowiński Park Narodowy — официальный regulamin (spn.gov.pl)"},
   {name:"Piaski (пас drogi granicznej)", address:"82-120 Krynica Morska, okolice granicy z Obwodem Kaliningradzkim", lat:54.4557642, lng:19.6350065, note:"Погранполоса с Калининградской обл. РФ — отдельный запретный режим Straży Granicznej, не связан с Urzędem Morskim. Табличpy 'Granica państwa — przekraczanie zabronione' и 'Pas drogi granicznej — wejście zabronione'", srcUrl:"https://pl.wikipedia.org/wiki/Pas_drogi_granicznej", srcLabel:"Ustawa o ochronie granicy państwowej — режим pasa drogi granicznej"}
 ];
 
 const permitSpots = [
-  {name:"Nadleśnictwo Elbląg (гос. лес, Mierzeja Wiślana)", address:"ul. Marymoncka 5, 82-300 Elbląg", lat:54.1725, lng:19.4045, note:"Гос. лес — нужно письменное заявление в лесничество даже для современных вещей. Ответ приходит в течение 30 дней.", srcUrl:"https://www.gov.pl/web/nadlesnictwo-elblag/kontakt", srcLabel:"Nadleśnictwo Elbląg — официальный контакт для подачи заявления (gov.pl)"},
+  {name:"Nadleśnictwo Elbląg (гос. лес, Mierzeja Wiślana)", address:"ul. Marymoncka 5, 82-300 Elbląg", lat:54.1725, lng:19.4045, note:"Гос. лес — нужно письменное заявление в лесничество даже для современных вещей. Ответ приходит в течение 30 дней. Лимит: до 1000 га за раз.", srcUrl:"https://www.gov.pl/web/nadlesnictwo-elblag/kontakt", srcLabel:"Nadleśnictwo Elbląg — официальный контакт для подачи заявления (gov.pl)"},
+  {name:"Nadleśnictwo Augustów (рядом Necko/Serwy)", address:"Turystyczna 19, 16-300 Augustów", lat:53.8561626, lng:23.019328, note:"Гос. лес Puszczy Augustowskiej. Тел: +48 87 643 99 00. Офис работает Пн-Пт 7:00-15:00.", srcUrl:"https://www.gov.pl/web/nadlesnictwo-augustow/kontakt", srcLabel:"Nadleśnictwo Augustów — официальный контакт (gov.pl)"},
+  {name:"Nadleśnictwo Maskulińskie (Мазуры, Jezioro Śniardwy)", address:"Śniardewno 1, 11-730", lat:53.7705691, lng:21.5868501, note:"Гос. лес рядом с крупнейшим озером Мазур. Тел: +48 87 421 60 53", srcUrl:"https://www.gov.pl/web/nadlesnictwo-maskulinskie", srcLabel:"Nadleśnictwo Maskulińskie — официальная страница (gov.pl)"},
+  {name:"Nadleśnictwo Cisna (Bieszczady, рядом Solina)", address:"Cisna 87a, 38-607", lat:49.2150703, lng:22.3211356, note:"Гос. лес в Бещадах, рядом с Jeziorem Solińskim. Тел: +48 13 468 63 01", srcUrl:"https://www.gov.pl/web/nadlesnictwo-cisna", srcLabel:"Nadleśnictwo Cisna — официальная страница (gov.pl)"},
   {name:"Любое государственное лесничество (общий образец)", address:"Форма заявления одинаковая для всех ок. 430 nadleśnictw Польши", lat:52.0, lng:19.5, note:"Найти нужное лесничество по адресу леса и отправить wniosek о udostępnienie terenu", srcUrl:"https://www.detect.pl/zgoda-lasow-panstwowych", srcLabel:"DETECT.pl — образец заявления в Nadleśnictwo + список всех лесничеств"},
   {name:"RZGW (реки/озёра в ведении Wody Polskie)", address:"Zależnie od regionu — RZGW Szczecin/Gdańsk/Warszawa/Kraków/Wrocław/Poznań", lat:52.4, lng:19.0, note:"Если предмет поиска — дно водоёма (не просто пляж) в управлении Wody Polskie, нужна их отдельная zgoda", srcUrl:"https://www.wody.gov.pl/nasze-dzialania/pozwolenia-wodnoprawne", srcLabel:"Wody Polskie — официальная страница подачи заявлений (gov)"}
 ];
